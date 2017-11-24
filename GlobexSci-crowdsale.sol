@@ -2,32 +2,6 @@ pragma solidity ^0.4.14;
 
 
 /**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-/**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
@@ -55,101 +29,6 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-}
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
 }
 
 
@@ -192,58 +71,14 @@ contract Ownable {
 }
 
 
-/**
- * @title DatumGenesisToken
- * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator. 
- * Note they can later distribute these tokens as they wish using `transfer` and other
- * `StandardToken` functions.
- */
-contract DatumGenesisToken is StandardToken, Ownable {
-
-  string public name = "DAT Genesis Token";           //The Token's name: e.g. Dat Genesis Tokens
-  uint8 public decimals = 18;                         //Number of decimals of the smallest unit
-  string public symbol = "DATG";                             //An identifier: e.g. REP
-                                           
-  uint256 public constant INITIAL_SUPPLY = 75000000 ether;
-
-  // Flag that determines if the token is transferable or not.
-  bool public transfersEnabled = false;
-
-  /**
-   * @dev Contructor that gives msg.sender all of existing tokens. 
-   */
-  function DatumGenesisToken() {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
-
-
-   /// @notice Enables token holders to transfer their tokens freely if true
-   /// @param _transfersEnabled True if transfers are allowed in the clone
-   function enableTransfers(bool _transfersEnabled) onlyOwner {
-      transfersEnabled = _transfersEnabled;
-   }
-
-  function transferFromContract(address _to, uint256 _value) onlyOwner returns (bool success) {
-    return super.transfer(_to, _value);
-  }
-
-  function transfer(address _to, uint256 _value) returns (bool success) {
-    require(transfersEnabled);
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-    require(transfersEnabled);
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) returns (bool) {
-      require(transfersEnabled);
-      return super.approve(_spender, _value);
-  }
+interface GlobexSci {
+  function totalSupply() constant returns (uint256 totalSupply);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+  function approve(address _spender, uint256 _value) returns (bool success);
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 }
-
 
 
 /**
@@ -254,27 +89,24 @@ contract DatumGenesisToken is StandardToken, Ownable {
  * on a token per ETH rate. Funds collected are forwarded to a refundable valut 
  * as they arrive.
  */
-contract DatCrowdPreSale is Ownable {
+contract GlobexSciPreSale is Ownable {
   using SafeMath for uint256;
 
   // The token being sold
-  DatumGenesisToken public token;
+  GlobexSci public token = GlobexSci(0xccb46aec99e38e09c2847dfd18e54ba2e59b1ba2);
 
   // start and end date where investments are allowed (both inclusive)
-  uint256 public startDate = 1502460000; //Fri, 11 Aug 2017 14:00:00 +00:00
-  uint256 public endDate = 1505138400; //Mon, 11 Sep 2017 14:00:00 +00:00
+  uint256 public startDate = 1512568800; //Wed, 06 Dec 2017 14:00:00 +0000
+  uint256 public endDate = 1515247200; //Sat, 06 Jan 2018 14:00:00 +0000
 
   // Minimum amount to participate
   uint256 public minimumParticipationAmount = 100000000000000000 wei; //0.1 ether
-
-  // Maximum amount to participate
-  uint256 public maximalParticipationAmount = 1000000000000000000000 wei; //1000 ether
 
   // address where funds are collected
   address wallet;
 
   // how many token units a buyer gets per ether
-  uint256 rate = 15000;
+  uint256 rate = 650;
 
   // amount of raised money in wei
   uint256 public weiRaised;
@@ -283,9 +115,8 @@ contract DatCrowdPreSale is Ownable {
   bool public isFinalized = false;
 
   //cap for the sale
-  uint256 public cap = 5000000000000000000000 wei; //5000 ether
+  uint256 public cap = 3076920000000000000000 wei; //3076 ether
  
-
 
 
   event Finalized();
@@ -300,7 +131,6 @@ contract DatCrowdPreSale is Ownable {
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
 
-
   /**
   * @notice Log an event for each funding contributed during the public phase
   * @notice Events are not logged when the constructor is being executed during
@@ -310,17 +140,10 @@ contract DatCrowdPreSale is Ownable {
 
 
   
-  function DatCrowdPreSale(address _wallet) {
-    token = createTokenContract();
-    wallet = _wallet;
+  function DatCrowdPreSale() {
+    wallet = msg.sender;
   }
 
-
-// creates the token to be sold. 
-  // override this method to have crowdsale of a specific datum token.
-  function createTokenContract() internal returns (DatumGenesisToken) {
-    return new DatumGenesisToken();
-}
 
   // fallback function can be used to buy tokens
   function () payable {
@@ -351,28 +174,6 @@ contract DatCrowdPreSale is Ownable {
     forwardFunds();
   }
 
-  //send tokens to the given address used for investors with other conditions, only contract owner can call this
-  function transferTokensManual(address beneficiary, uint256 amount) onlyOwner {
-    require(beneficiary != 0x0);
-    require(amount != 0);
-    require(weiRaised.add(amount) <= cap);
-
-    //transfer tokens
-    token.transferFromContract(beneficiary, amount);
-
-    // update state
-    weiRaised = weiRaised.add(amount);
-
-    //Token purchase event
-    TokenPurchase(wallet, beneficiary, 0, amount);
-
-  }
-
-   /// @notice Enables token holders to transfer their tokens freely if true
-   /// @param _transfersEnabled True if transfers are allowed in the clone
-   function enableTransfers(bool _transfersEnabled) onlyOwner {
-      token.enableTransfers(_transfersEnabled);
-   }
 
   // send ether to the fund collection wallet
   // override to create custom fund forwarding mechanisms
