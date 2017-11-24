@@ -162,7 +162,7 @@ contract GlobexSciPreSale is Ownable {
     uint256 tokens = weiAmount.mul(rate);
 
     //purchase tokens and transfer to beneficiary
-    token.transferFromContract(beneficiary, tokens);
+    token.transfer(beneficiary, tokens);
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
