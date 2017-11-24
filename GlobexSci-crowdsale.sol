@@ -184,8 +184,10 @@ contract GlobexSciPreSale is Ownable {
   // should be called after crowdsale ends or to emergency stop the sale
   function finalize() onlyOwner {
     require(!isFinalized);
-    Finalized();
+    uint256 unsoldTokens = token.balanceOf(this);
+    token.transfer(wallet, unsoldTokens);
     isFinalized = true;
+    Finalized();
   }
 
 
