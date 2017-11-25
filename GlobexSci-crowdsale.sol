@@ -93,6 +93,13 @@ contract GlobexSciPreSale is Ownable {
   using SafeMath for uint256;
 
   // The token being sold
+  /**
+  *
+  * BEFORE DEPLOY CHANGE HERE !!!!!
+  * BEFORE DEPLOY CHANGE HERE !!!!!
+  * BEFORE DEPLOY CHANGE HERE !!!!!
+  *
+  */
   GlobexSci public token = GlobexSci(0xccb46aec99e38e09c2847dfd18e54ba2e59b1ba2);
 
   // start and end date where investments are allowed (both inclusive)
@@ -104,6 +111,19 @@ contract GlobexSciPreSale is Ownable {
 
   // address where funds are collected
   address wallet;
+
+  // address for development team
+  /**
+  *
+  * BEFORE DEPLOY CHANGE HERE !!!!!
+  * BEFORE DEPLOY CHANGE HERE !!!!!
+  * BEFORE DEPLOY CHANGE HERE !!!!!
+  *
+  */
+  address wallet2 = 0x4602adBfE84beB925c924c19d3AE353688389265;
+  // what persentage goes to the second wallet
+  uint256 percentage = 50;
+
 
   // how many token units a buyer gets per ether
   uint256 rate = 650;
@@ -140,7 +160,7 @@ contract GlobexSciPreSale is Ownable {
 
 
   
-  function DatCrowdPreSale() {
+  function GlobexSciPreSale() {
     wallet = msg.sender;
   }
 
@@ -178,7 +198,11 @@ contract GlobexSciPreSale is Ownable {
   // send ether to the fund collection wallet
   // override to create custom fund forwarding mechanisms
   function forwardFunds() internal {
-    wallet.transfer(msg.value);
+    uint256 amountForWallet2 = (msg.value).mul(percentage).div(100);
+    uint256 amountForWallet = (msg.value).sub(amountForWallet2);
+  
+    wallet2.transfer(amountForWallet2);
+    wallet.transfer(amountForWallet);
   }
 
   // should be called after crowdsale ends or to emergency stop the sale
